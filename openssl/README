@@ -1,0 +1,7 @@
+OpenSSL binaries are from the WIN32 full installer distributed on this page
+http://www.slproweb.com/products/Win32OpenSSL.html
+
+If you have Borland C++ Builder, you can translate these dlls into lib files
+by using the convert_to_bcc.bat
+
+It's not necessary for you as the libs are commited to the repo.
