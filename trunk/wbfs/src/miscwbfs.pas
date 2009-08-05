@@ -7,23 +7,36 @@ uses
 
 type
 
-  TGameTitle = array[1..128] of char;
+  TRegionCode = byte;
+
+  TRegion =
+  (
+    rgNTSC,
+    rgNTSCJ,
+    rgPAL,
+    rgKOR,
+    rgNOREGION
+  );
+
+  TGameTitle = array[1..192] of char;
 
   TDiscCode = record
-    DiscId   : array[1..2] of char;
-    GameCode : array[1..4] of char;
+    ConsoleId : byte;
+    GameCode  : array[1..2] of byte;
+    RegionCode: TRegionCode;
+    MakerCode : array[1..2] of byte;
   end;
+
 
   TWiiDiscHeader = record
     DiscCode           : TDiscCode;
-    RegionCode         : byte;
-    MakerCode          : word;
+    //Hu                 : array[1..4] of byte;
     DiscId             : byte;
     DiscVersion        : byte;
     AudioStreaming     : byte;
     StreamingBufferSize: byte;
     Unused             : array[1..14] of byte;
-    MagicWord          : longword;  //0x5D1C9EA3
+    MagicWord          : array[1..4] of byte;  //0x5D1C9EA3
     GameTitle          : TGameTitle;
     Empty1             : byte;
     Empty2             : byte;
@@ -49,6 +62,9 @@ type
 
   function GameTitleToString(GameTitle : TGameTitle) : string;
 
+  function RegionCodeToRegion(RegionCode : TRegionCode) : TRegion;
+
+  function RegionToString(Region : TRegion) : string;
 
 implementation
 
@@ -83,12 +99,13 @@ end;
 function DiscCodeToString(DiscCode : TDiscCode) : string;
 begin
   SetLength(Result, SizeOf(TDiscCode));
-  Result[1] := DiscCode.DiscId[1];
-  Result[2] := DiscCode.DiscId[2];
-  Result[3] := DiscCode.GameCode[1];
-  Result[4] := DiscCode.GameCode[2];
-  Result[5] := DiscCode.GameCode[3];
-  Result[6] := DiscCode.GameCode[4];
+  Result[1] := Char(DiscCode.ConsoleId);
+  Result[2] := Char(DiscCode.GameCode[1]);
+  Result[3] := Char(DiscCode.GameCode[2]);
+  Result[4] := Char(DiscCode.RegionCode);
+  Result[5] := Char(DiscCode.MakerCode[1]);
+  Result[6] := Char(DiscCode.MakerCode[2]);
+  Result := Trim(Result);
 end;
 
 function GameTitleToString(GameTitle : TGameTitle) : string;
@@ -99,6 +116,42 @@ begin
 
   for i := 1 to Length(Result) do
     Result[i] := GameTitle[i];
+
+  Result := Trim(Result);
+end;
+
+
+function RegionCodeToRegion(RegionCode : TRegionCode) : TRegion;
+var
+  RC : char;
+begin
+  SendInteger('RegionCode',RegionCode);
+  RC := Char(RegionCode);
+  SendDebug(RC);
+  case RC of
+    'E' : Result := rgNTSC;
+    'P',
+    'F',
+    'D',
+    'L' : Result := rgPAL;
+    'J' : Result := rgNTSCJ;
+    'K',
+    'Q',
+    'T' : Result := rgKOR;
+    else
+                Result := rgNOREGION
+  end;
+end;
+
+function RegionToString(Region : TRegion) : string;
+begin
+  case Region of
+    rgNTSC    : result := 'NTSC';    
+    rgPAL     : result := 'PAL';
+    rgNTSCJ   : result := 'NTSCJ';
+    rgKOR     : result := 'KOR';
+    rgNOREGION: result := 'NOREGION';
+  end;
 end;
 
 
