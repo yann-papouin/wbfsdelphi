@@ -18,10 +18,11 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 629
-    Height = 431
+    Height = 414
     Align = alClient
     ScrollBars = ssVertical
     TabOrder = 0
+    ExplicitHeight = 431
   end
   object SpTBXDock1: TSpTBXDock
     Left = 0
@@ -65,6 +66,23 @@ object MainForm: TMainForm
         TabOrder = 2
       end
     end
+  end
+  object HddSpace: TSpTBXProgressBar
+    Left = 0
+    Top = 414
+    Width = 629
+    Height = 17
+    Caption = '0%'
+    Align = alBottom
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+    ExplicitLeft = 128
+    ExplicitTop = 224
+    ExplicitWidth = 150
   end
   object ActionList: TActionList
     Left = 8

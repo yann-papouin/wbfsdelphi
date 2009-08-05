@@ -18,6 +18,7 @@ type
     SpTBXDock1: TSpTBXDock;
     FormStorage: TJvFormStorage;
     Storage: TJvAppIniFileStorage;
+    HddSpace: TSpTBXProgressBar;
     procedure RefreshExecute(Sender: TObject);
   private
     { Déclarations privées }
@@ -32,41 +33,6 @@ implementation
 
 {$R *.dfm}
 
-
-
-function ReadDiscSector(Handle: THandle; AOffset, Count: u32; var buffer): integer; cdecl;
-var
-  large : LARGE_INTEGER;
-  read : DWORD;
-  offset : u64;
-  Head : wbfs_head_t;
-begin
-  Result := 1;
-
-  offset := AOffset;
-  offset := offset shl 2;
-
-  large.QuadPart := offset;
-
-  if SetFilePointerEx(Handle, large, 0, FILE_BEGIN) <> false then
-  begin
-    read := 0;
-    if ReadFile(handle, buffer, count, read, nil) <> false then
-    begin
-      Result := 0;
-      Exit;
-    end
-      else
-    begin
-      SendDebug('Error reading wii disc sector');
-    end;
-  end
-    else
-  begin
-    SendDebugFmt('Error seeking in disk file (read) (%d,%d)',[offset, count]);
-  end;
-
-end;
 
 (*
 function GetAllGamesSize(PartitionInfo:wbfs_t) : Double;
@@ -100,6 +66,7 @@ var
   EstimatedSize : double;
   Title, Code, Region : string;
   List : TStringList;
+  Used, Free: double;
 begin
   GameList.CLear;
   List := TStringList.Create;
@@ -125,12 +92,16 @@ begin
       Code := DiscCodeToString(WiiDiscHeader.DiscCode);
       Region := RegionToString(RegionCodeToRegion(WiiDiscHeader.DiscCode.RegionCode));
 
-      //EstimatedSize := GetSize(PartitionInfo, Code) / GB;
       EstimatedSize := uint64(size) * 4 / GB;
       List.Add(Format('%s (%s) %s (%f Gb)',[Title, Code, Region, EstimatedSize]));
     end;
     
     FreeMemory(WiiDiscHeader);
+
+    GetDiskSpace(PartitionInfo, Used, Free);
+    HddSpace.Max := Round(Used+Free);
+    HddSpace.Position := Round(Used);
+
     CloseHandle(PartitionInfo.callback_data);
   end
     else
