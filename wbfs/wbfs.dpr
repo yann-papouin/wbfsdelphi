@@ -1,6 +1,7 @@
 program wbfs;
 
 uses
+  ExceptionLog,
   Forms,
   GuiMain in 'src\GuiMain.pas' {MainForm},
   libwbfs in 'src\libwbfs.pas',

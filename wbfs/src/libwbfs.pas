@@ -261,6 +261,8 @@ type
   
 const
   WBFS_MAGIC = (DWORD('W') SHL 24) or (DWORD('B') SHL 16) or (DWORD('F') SHL 8) or DWORD('S');
+  GB         = (1024 * 1024 * 1024);
+  MB         = (1024 * 1024);
 
 implementation
 
