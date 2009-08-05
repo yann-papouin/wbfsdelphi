@@ -56,6 +56,8 @@ type
 
   function GetCapacity(const Filename : string; var sector_size : u32; sector_count : u32) :integer;
 
+  function GetDiskSpace(PartitionInfo : wbfs_t; var UsedSpace: double; var FreeSpace: double): boolean;
+
   function OpenPartition(PartitionLetter : char; reset : integer) : wbfs_t;
 
   function DiscCodeToString(DiscCode : TDiscCode) : string;
@@ -239,6 +241,61 @@ begin
 end;
 
 
+
+function ReadDiscSector(Handle: THandle; AOffset, Count: u32; var buffer): integer; cdecl;
+var
+  large : LARGE_INTEGER;
+  read : DWORD;
+  offset : u64;
+  Head : wbfs_head_t;
+begin
+  Result := 1;
+
+  offset := AOffset;
+  offset := offset shl 2;
+
+  large.QuadPart := offset;
+
+  if SetFilePointerEx(Handle, large, 0, FILE_BEGIN) <> false then
+  begin
+    read := 0;
+    if ReadFile(handle, buffer, count, read, nil) <> false then
+    begin
+      Result := 0;
+      Exit;
+    end
+      else
+    begin
+      SendDebug('Error reading wii disc sector');
+    end;
+  end
+    else
+  begin
+    SendDebugFmt('Error seeking in disk file (read) (%d,%d)',[offset, count]);
+  end;
+
+end;
+
+function GetAllGamesSize(const Filename: string; PartitionInfo:wbfs_t) : Double;
+var
+  Handle : THandle;
+begin
+
+  // Filename is the partition letter
+  Handle := CreateFile(PAnsiChar(Filename), GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
+
+  if Handle <> INVALID_HANDLE_VALUE then
+  begin
+    Result := _wbfs_estimate_disc(PartitionInfo, @ReadDiscSector, Handle, ONLY_GAME_PARTITION);
+  end
+    else
+  begin
+    result := -1;
+  end;
+
+end;
+
+
 function GetCapacity(const Filename: string; var sector_size: u32; sector_count: u32): integer;
 var
   Dg : TDISK_GEOMETRY;
@@ -251,7 +308,6 @@ begin
 
   if Handle <> INVALID_HANDLE_VALUE then
   begin
-    //Exit;
     if DeviceIoControl(Handle, IOCTL_DISK_GET_DRIVE_GEOMETRY, 0, 0, @Dg, SizeOf(TDISK_GEOMETRY), VarBytes, 0) <> false then
     begin
       sector_size := Dg.BytesPerSector;
@@ -281,6 +337,28 @@ begin
   end;
 
 end;
+
+function GetDiskSpace(PartitionInfo : wbfs_t; var UsedSpace: double; var FreeSpace: double): boolean;
+var
+  Blocks : Longword;
+  SectorSize : Double;
+begin
+  Result := false;
+  if PartitionInfo <> nil then
+  begin
+    Blocks := _wbfs_count_usedblocks(PartitionInfo);
+    SectorSize := PartitionInfo.wbfs_sec_sz / GB;
+
+    FreeSpace := SectorSize * Blocks;
+    UsedSpace := SectorSize * (PartitionInfo.n_wbfs_sec - Blocks);
+    Result := true;
+  end
+    else
+  begin
+    SendDebug('Invalid partition supplied');
+  end;
+end;
+
 
 function OpenPartition(PartitionLetter: Char; reset: integer): wbfs_t;
 var
