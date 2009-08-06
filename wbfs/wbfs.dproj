@@ -48,6 +48,118 @@
       
       
       
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
       <Excluded_Packages Name="C:\Documents and Settings\All Users\Documents\RAD Studio\5.0\Bpl\RvDesign70.bpl">Fichier C:\Documents and Settings\All Users\Documents\RAD Studio\5.0\Bpl\RvDesign70.bpl non trouvé</Excluded_Packages>
     </Excluded_Packages><Source><Source Name="MainSource">wbfs.dpr</Source></Source></Delphi.Personality></BorlandProject></BorlandProject>
   </ProjectExtensions>
@@ -56,11 +168,18 @@
     <DelphiCompile Include="wbfs.dpr">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
+    <DCCReference Include="src\GuiCover.pas">
+      <Form>CoverForm</Form>
+    </DCCReference>
     <DCCReference Include="src\GuiMain.pas">
       <Form>MainForm</Form>
     </DCCReference>
+    <DCCReference Include="src\GuiSettings.pas">
+      <Form>SettingsForm</Form>
+    </DCCReference>
     <DCCReference Include="src\libwbfs.pas" />
     <DCCReference Include="src\miscwbfs.pas" />
+    <DCCReference Include="src\StringFunction.pas" />
     <DCCReference Include="src\WinIOCTL.pas" />
   </ItemGroup>
 </Project>
