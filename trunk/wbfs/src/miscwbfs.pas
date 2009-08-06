@@ -43,7 +43,17 @@ type
     Padding            : array[1..380] of byte;
   end;
   PWiiDiscHeader = ^TWiiDiscHeader;
-  
+
+  TCoverLang = (
+    clEN,
+    clFR,
+    clDE,
+    clES,
+    clIT,
+    clNL,
+    clPO,
+    clAU
+  );
 
   // Not available in Windows.pas
   function SetFilePointerEx(hFile: THandle; lDistanceToMove: LARGE_INTEGER; lpNewFilePointer: Pointer; dwMoveMethod: DWORD): BOOL; stdcall; external kernel32;
@@ -67,6 +77,10 @@ type
   function RegionCodeToRegion(RegionCode : TRegionCode) : TRegion;
 
   function RegionToString(Region : TRegion) : string;
+
+  function CoverLangToString(CoverLang : TCoverLang) : string;
+
+  function CoverLangToHumanString(CoverLang : TCoverLang) : string;
 
 implementation
 
@@ -127,9 +141,7 @@ function RegionCodeToRegion(RegionCode : TRegionCode) : TRegion;
 var
   RC : char;
 begin
-  SendInteger('RegionCode',RegionCode);
   RC := Char(RegionCode);
-  SendDebug(RC);
   case RC of
     'E' : Result := rgNTSC;
     'P',
@@ -141,7 +153,7 @@ begin
     'Q',
     'T' : Result := rgKOR;
     else
-                Result := rgNOREGION
+      Result := rgNOREGION
   end;
 end;
 
@@ -153,9 +165,43 @@ begin
     rgNTSCJ   : result := 'NTSCJ';
     rgKOR     : result := 'KOR';
     rgNOREGION: result := 'NOREGION';
+      else
+    result := '???';
   end;
 end;
 
+
+function CoverLangToString(CoverLang : TCoverLang) : string;
+begin
+  case CoverLang of
+    clEN : Result := 'EN';
+    clFR : Result := 'FR';
+    clDE : Result := 'DE';
+    clES : Result := 'ES';
+    clIT : Result := 'IT';
+    clNL : Result := 'NL';
+    clPO : Result := 'PO';
+    clAU : Result := 'AU';
+      else
+    result := '???';
+  end;
+end;
+
+function CoverLangToHumanString(CoverLang : TCoverLang) : string;
+begin
+  case CoverLang of
+    clEN : Result := 'English';
+    clFR : Result := 'Francais';
+    clDE : Result := 'Deutsch';
+    clES : Result := 'Espanol';
+    clIT : Result := 'Italiano';
+    clNL : Result := 'Nederlands';
+    clPO : Result := 'Polski';
+    clAU : Result := 'Australian';
+      else
+    result := '???';
+  end;
+end;
 
 function ReadSector(Handle: THandle; lba, count: u32; var buffer): integer; cdecl;
 var

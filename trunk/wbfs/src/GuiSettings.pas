@@ -13,6 +13,7 @@ type
     ApplicationPath: TSpTBXLabel;
     ActionList: TActionList;
     LoadDefault: TAction;
+    CoverNotFound: TSpTBXButtonEdit;
     procedure FormCreate(Sender: TObject);
     procedure LoadDefaultExecute(Sender: TObject);
   private
@@ -42,6 +43,9 @@ procedure TSettingsForm.LoadDefaultExecute(Sender: TObject);
 begin
   CoverPath.Text := ApplicationPath.Caption + 'covers';
   CoverPath.Text := IncludeTrailingBackslash(CoverPath.Text);
+
+  CoverNotFound.Text := ApplicationPath.Caption + 'images';
+  CoverNotFound.Text := IncludeTrailingBackslash(CoverNotFound.Text) + 'cover-not-found.png';
 end;
 
 end.

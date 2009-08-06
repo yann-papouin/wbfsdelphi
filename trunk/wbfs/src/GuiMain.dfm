@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'MainForm'
-  ClientHeight = 476
+  ClientHeight = 592
   ClientWidth = 698
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,7 +16,7 @@ object MainForm: TMainForm
   TextHeight = 13
   object DockBottom: TSpTBXDock
     Left = 0
-    Top = 441
+    Top = 557
     Width = 698
     Height = 9
     Position = dpBottom
@@ -138,8 +138,8 @@ object MainForm: TMainForm
   object GameList: TVirtualStringTree
     Left = 9
     Top = 102
-    Width = 689
-    Height = 339
+    Width = 680
+    Height = 455
     Align = alClient
     DefaultNodeHeight = 24
     Header.AutoSizeIndex = 1
@@ -167,7 +167,7 @@ object MainForm: TMainForm
       item
         Options = [coAllowClick, coDraggable, coEnabled, coParentBidiMode, coResizable, coShowDropMark, coVisible, coAllowFocus]
         Position = 1
-        Width = 445
+        Width = 436
         WideText = 'Name'
       end
       item
@@ -185,7 +185,7 @@ object MainForm: TMainForm
   end
   object SpTBXStatusBar1: TSpTBXStatusBar
     Left = 0
-    Top = 450
+    Top = 566
     Width = 698
     Height = 26
   end
@@ -193,7 +193,14 @@ object MainForm: TMainForm
     Left = 0
     Top = 102
     Width = 9
-    Height = 339
+    Height = 455
+  end
+  object DockRight: TSpTBXMultiDock
+    Left = 689
+    Top = 102
+    Width = 9
+    Height = 455
+    Position = dpxRight
   end
   object ActionList: TActionList
     Images = PngImageList

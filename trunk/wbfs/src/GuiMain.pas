@@ -41,6 +41,7 @@ type
     SpTBXToolWindow2: TSpTBXToolWindow;
     HddSpaceLabel: TSpTBXLabel;
     HddSpace: TSpTBXProgressBar;
+    DockRight: TSpTBXMultiDock;
     procedure RefreshExecute(Sender: TObject);
     procedure GameListGetNodeDataSize(Sender: TBaseVirtualTree; var NodeDataSize: Integer);
     procedure GameListGetText(Sender: TBaseVirtualTree; Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType; var CellText: WideString);
