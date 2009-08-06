@@ -4,11 +4,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ActnList, xmldom, XMLIntf, msxmldom, XMLDoc, IdBaseComponent,
-  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, SpTBXItem, pngimage,
-  SpTBXControls, JvComponentBase, JvThread, GLWin32Viewer, GLScene,
+  Dialogs, ActnList, xmldom, XMLIntf, msxmldom, XMLDoc, IdBaseComponent, TypInfo,
+  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, SpTBXItem, pngimage, GraphicEx,
+  SpTBXControls, JvComponentBase, JvThread, GLWin32Viewer, GLScene, miscwbfs,
   GLObjects, GLCrossPlatform, GLVectorFileObjects, GLCadencer, GLMirror,
-  GLSimpleNavigation, GLCoordinates, BaseClasses, GLSkydome, TB2Dock, SpTBXDkPanels, ComCtrls, StdCtrls, TntStdCtrls, SpTBXEditors, JvFormPlacement;
+  GLSimpleNavigation, GLCoordinates, BaseClasses, GLSkydome, TB2Dock, SpTBXDkPanels,
+  ComCtrls, StdCtrls, TntStdCtrls, SpTBXEditors, JvFormPlacement;
 
 type
   TCoverForm = class(TForm)
@@ -35,20 +36,20 @@ type
     CameraLight: TGLLightSource;
     Lights: TGLDummyCube;
     CoverPanel: TSpTBXDockablePanel;
-    CoverLang: TSpTBXComboBox;
+    CoverLangChooser: TSpTBXComboBox;
     FormStorage: TJvFormStorage;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure DownloadInfosExecute(Sender: TObject);
     procedure DownloadCoversExecute(Sender: TObject);
     procedure CoverThreadExecute(Sender: TObject; Params: Pointer);
-    procedure CoverThreadFinish(Sender: TObject);
     procedure CoverThreadBegin(Sender: TObject);
     procedure CadencerProgress(Sender: TObject; const deltaTime, newTime: Double);
     procedure ViewerMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure ViewerMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ViewerMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure CoverLangChange(Sender: TObject);
+    procedure CoverLangChooserChange(Sender: TObject);
+    procedure CoverThreadFinish(Sender: TObject);
   private
     { Déclarations privées }
     FFreezeRotate : boolean; 
@@ -58,18 +59,28 @@ type
     FRotateTargetSpeed: Single;
     FInitialSpeed : Single;
     FMouseMove : boolean;
-    function GetLang: string;
-    function MakeURL(Code : string) : string;
+    function GetCoverLang: TCoverLang;
+  protected
+    procedure FillCoverLang;
   public
     { Déclarations publiques }
-    procedure LoadCover(Code : string);
-    property Lang : string read GetLang;
+    procedure LoadCover(DiscCode : string);
+    property CurrentCoverLang : TCoverLang read GetCoverLang;
   end;
+
+
+  TCoverData = record
+    Lang     : string[2];
+    DiscCode : string[6];
+  end;
+  PCoverData = ^TCoverData;
 
 var
   CoverForm: TCoverForm;
 
 const
+  BOX_3DS_PATH = 'images\box.3DS';
+  COVER_3DS_PATH = 'images\cover.3DS';
   LANG_SEP = '|';
   DB_FILE = 'C:\Documents and Settings\yanapa\Mes documents\RAD Studio\Projets\wbfsdelphi\wbfs\covers\wiitdb.xml';
 
@@ -95,14 +106,14 @@ begin
   Result := SFRightRight('/', Result);
 end;
 
-function TCoverForm.MakeURL(Code : string) : string;
+function MakeURL(Lang : string; Code : string) : string;
 begin
   result := Format('http://wiitdb.com/wiitdb/artwork/coverfull/%s/%s.png',[Lang, Code]);
 end;
 
-procedure TCoverForm.CoverLangChange(Sender: TObject);
+procedure TCoverForm.CoverLangChooserChange(Sender: TObject);
 begin
-  DownloadCovers.Execute;
+// DownloadCovers.Execute;
 end;
 
 procedure TCoverForm.CoverThreadBegin(Sender: TObject);
@@ -115,11 +126,15 @@ var
   Stream : TFileStream;
   Http : TIdHTTP;
   Filename : string;
-  URL : Widestring;
+  CoverData : PCoverData;
   InvalidFile : boolean;
+  URL :string;
 begin
   InvalidFile := false;
-  URL := Widestring(Params);
+  CoverData := Params;
+
+  URL := MakeURL(CoverData.Lang, CoverData.DiscCode);
+
   Filename := ExtractUrlFileName(URL);
   Filename := IncludeTrailingBackslash(ExtractUrlLang(URL)) + Filename;
   Filename := SettingsForm.CoverPath.Text + Filename;
@@ -136,10 +151,7 @@ begin
       except
         on e:exception do
         begin
-          //DeleteFile(Filename);
           InvalidFile := true;
-          //SendDebugWarning(URL);
-          //SendDebugError(e.Message);
         end;
       end;
     finally
@@ -156,26 +168,71 @@ begin
   SendDebug('CoverThreadFinish');
 end;
 
-
-procedure TCoverForm.LoadCover(Code: string);
+procedure TCoverForm.LoadCover(DiscCode: string);
 var
   Filename : string;
-  PNG : TPNGObject;
-begin
-  Filename := IncludeTrailingBackslash(Lang) + Code + '.png';
-  Filename := SettingsForm.CoverPath.Text + Filename;
+  PNG : TPNGGraphic;
+  Thread : TJvBaseThread;
 
-  SendDebugFmt('Load cover %s',[Filename]);
+  procedure LoadCoverFile(CoverLang : TCoverLang);
+  var
+    Lang : string;
+    CoverData : PCoverData;
+  begin
+    CoverData := nil;
+    
+    Lang := CoverLangToString(CoverLang);
+    Filename := IncludeTrailingBackslash(Lang) + DiscCode + '.png';
+    Filename := SettingsForm.CoverPath.Text + Filename;
+
+    //SendDebugFmt('Load cover %s',[Filename]);
+
+    if not FileExists(Filename) then
+    begin
+      New(CoverData);
+      CoverData.Lang := Lang;
+      CoverData.DiscCode := DiscCode;
+      SendDebugFmt('CoverData address %d',[Integer(CoverData)]);
+      Thread := CoverThread.Execute(CoverData);
+
+      while not Thread.Finished do
+      begin
+        Application.ProcessMessages;
+        Cadencer.Progress;
+        //SendDebug('Waiting for Thread');
+      end;
+      Dispose(CoverData);
+    end;
+    
+  end;
+begin
+  LoadCoverFile(CurrentCoverLang);
+
+  // If failed then fallback to the English one
+  if not FileExists(Filename) and not (CurrentCoverLang = clEN) then
+  begin
+    LoadCoverFile(clEN);
+  end;
+
+  // If everything failed then load default 'nocover'
+  if not FileExists(Filename) then
+  begin
+    Filename := SettingsForm.CoverNotFound.Text;
+  end;
+  
   if FileExists(Filename) then
   begin
     try
       try
-        PNG := TPNGObject.Create;
+        PNG := TPNGGraphic.Create;
         PNG.LoadFromFile(Filename);
         Cover.Material.Texture.Image.Assign(PNG);
       except
         on e:Exception do
+        begin
           SendDebugError(e.Message);
+          DeleteFile(Filename);
+        end;
       end;
     finally
       PNG.Free;
@@ -189,8 +246,9 @@ var
   Node : PVirtualNode;
   Data : PGame;
   i :integer;
-  URLs : array [0..512] of Widestring;
+  CoverData : array [0..512] of TCoverData;
 begin
+(*
   if CoverThread.Count <> 0 then
     Exit;
   
@@ -200,22 +258,23 @@ begin
   while Node <> nil do
   begin
     Data := Mainform.GameList.GetNodeData(Node);
-    URLs[i] := MakeURL(Data.DiscCode);
+    CoverData[i].Lang := Lang;
+    CoverData[i].DiscCode := Data.DiscCode;
 
-    CoverThread.Execute(Pointer(URLs[i]));
-    //CoverThreadExecute(Self, Pointer(URLs[i]));
+    CoverThread.Execute(@CoverData[i]);
 
     Inc(i);
-
     SendInteger('i',i);
-
     Node := Mainform.GameList.GetNext(Node);
   end;
 
 
   while CoverThread.Count <> 0 do
+  begin
     Application.ProcessMessages;
-  
+    Cadencer.Progress;
+  end;
+*)
 end;
 
 procedure TCoverForm.DownloadInfosExecute(Sender: TObject);
@@ -238,10 +297,29 @@ begin
   end;
 end;
 
+procedure TCoverForm.FillCoverLang;
+var
+  i : TCoverLang ;
+  Text : string;
+begin
+  for i := clEN to clAU do
+  begin
+    Text := Format('%s (%s)',[CoverLangToString(i), CoverLangToHumanString(i)]);
+    CoverLangChooser.Items.Add(Text);
+  end;
+end;
+
+
+function TCoverForm.GetCoverLang: TCoverLang;
+begin
+  if InRange(CoverLangChooser.ItemIndex, GetTypeData(TypeInfo(TCoverLang))^.MinValue, GetTypeData(TypeInfo(TCoverLang))^.MaxValue)
+  then
+    result := TCoverLang(CoverLangChooser.ItemIndex)
+  else
+    result := clEN;
+end;
+
 procedure TCoverForm.FormCreate(Sender: TObject);
-const
-  BOX_3DS_PATH = 'images\box.3DS';
-  COVER_3DS_PATH = 'images\cover.3DS';
 var
   BoxPath, CoverPath : string;
 begin
@@ -256,7 +334,6 @@ begin
     XMLDoc.Active := true;
   end;
 
-  SendDebug(BoxPath);
   if FileExists(BoxPath) then
   begin
     Box.LoadFromFile(BoxPath);
@@ -266,10 +343,10 @@ begin
   begin
     Cover.LoadFromFile(CoverPath);
     Cover.Material.Texture.Enabled := true;
-    Cover.Material.Texture.Image.LoadFromFile('c:\RLIP64.jpg');
   end;
 
   CoverPanel.CurrentDock := MainForm.DockLeft;
+  FillCoverLang;
 end;
 
 procedure TCoverForm.FormDestroy(Sender: TObject);
@@ -277,12 +354,7 @@ begin
   XMLDoc.Active := false;
 end;
 
-function TCoverForm.GetLang: string;
-begin
-  result := CoverLang.Text;
-  if pos(LANG_SEP, result) <> 0 then
-    result := SFLeft(LANG_SEP, result);
-end;
+
 
 procedure TCoverForm.CadencerProgress(Sender: TObject; const deltaTime, newTime: Double);
 begin
@@ -319,7 +391,6 @@ procedure TCoverForm.ViewerMouseMove(Sender: TObject; Shift: TShiftState; X, Y: 
   begin
     pitchDelta := 0;
     turnDelta := FRotateTargetSpeed * (FOldX - X);
-    //Viewer.Camera.RotateObject(WiiBox, pitchDelta, turnDelta);
     WiiBox.RollAngle := WiiBox.RollAngle - turnDelta;
   end;
 
@@ -337,7 +408,6 @@ begin
     end
       else
     begin
-      SendDebugFMt('GetTickCount',[FInitialSpeed]);
       FDiffDown := GetTickCount;
       FDownX := X;
     end;
@@ -351,10 +421,7 @@ end;
 procedure TCoverForm.ViewerMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   FFreezeRotate := false;
-
   FInitialSpeed := ((FDownX - X) * 20/ (GetTickCount - FDiffDown)) ;
-  SendDebugFMt('%f',[FInitialSpeed]);
-
 end;
 
 end.

@@ -32,32 +32,26 @@ object CoverForm: TCoverForm
     TabOrder = 1
     object Viewer: TGLSceneViewer
       Left = 0
-      Top = 10
+      Top = 19
       Width = 297
-      Height = 378
+      Height = 369
       Camera = Camera
       Buffer.AntiAliasing = aa4xHQ
-      FieldOfView = 117.563194274902400000
+      FieldOfView = 117.563194274902300000
       Align = alClient
       OnMouseDown = ViewerMouseDown
       OnMouseMove = ViewerMouseMove
       OnMouseUp = ViewerMouseUp
     end
-    object CoverLang: TSpTBXComboBox
+    object CoverLangChooser: TSpTBXComboBox
       Left = 0
       Top = 388
       Width = 297
       Height = 21
       Align = alBottom
       ItemHeight = 13
-      ItemIndex = 0
       TabOrder = 2
-      Text = 'EN|English'
-      OnChange = CoverLangChange
-      Items.Strings = (
-        'EN|English'
-        'FR|French'
-        'DE|Deutsh')
+      OnChange = CoverLangChooserChange
     end
   end
   object ActionList: TActionList
@@ -176,7 +170,7 @@ object CoverForm: TCoverForm
     AppStoragePath = '%FORM_NAME%\'
     Options = []
     StoredProps.Strings = (
-      'CoverLang.ItemIndex')
+      'CoverLangChooser.ItemIndex')
     StoredValues = <>
     Left = 8
     Top = 176

@@ -26,7 +26,6 @@ object SettingsForm: TSettingsForm
     EditButton.Height = 17
     EditButton.Caption = '...'
     EditButton.Align = alRight
-    EditButton.ExplicitLeft = 98
   end
   object ApplicationPath: TSpTBXLabel
     Left = 16
@@ -34,6 +33,19 @@ object SettingsForm: TSettingsForm
     Width = 80
     Height = 19
     Caption = 'ApplicationPath'
+  end
+  object CoverNotFound: TSpTBXButtonEdit
+    Left = 16
+    Top = 60
+    Width = 345
+    Height = 21
+    TabOrder = 2
+    EditButton.Left = 322
+    EditButton.Top = 0
+    EditButton.Width = 19
+    EditButton.Height = 17
+    EditButton.Caption = '...'
+    EditButton.Align = alRight
   end
   object FormStorage: TJvFormStorage
     AppStorage = MainForm.Storage
